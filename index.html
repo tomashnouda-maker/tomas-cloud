@@ -3,71 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOMAS CLOUD NETWORK</title>
+    <title>TOMAS CLOUD MOBILE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
         body { background: #020617; overflow: hidden; font-family: 'Cairo', sans-serif; margin: 0; touch-action: none; }
         
-        /* الأسهم المتنقلة */
+        /* الأسهم الرفيعة */
         .connector { 
-            position: absolute; height: 1.5px; transform-origin: left center; 
-            z-index: 10; opacity: 0.5;
+            position: absolute; height: 1px; transform-origin: left center; 
+            z-index: 10; opacity: 0.4;
             animation: flow 2s infinite linear;
         }
         @keyframes flow {
-            0% { filter: brightness(1); opacity: 0.3; }
-            50% { filter: brightness(1.8); opacity: 0.8; }
-            100% { filter: brightness(1); opacity: 0.3; }
+            0% { filter: brightness(1); opacity: 0.2; }
+            50% { filter: brightness(2); opacity: 0.7; }
+            100% { filter: brightness(1); opacity: 0.2; }
         }
 
-        /* تصميم العقد (المربعات) */
+        /* المربعات المصغرة للهاتف */
         .node-box {
             position: absolute; z-index: 20;
-            backdrop-filter: blur(8px);
-            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            background: rgba(15, 23, 42, 0.9);
             transition: all 0.3s ease;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            text-align: center;
-            border-width: 2px;
+            border-width: 1.5px;
+            padding: 6px 10px; /* تصغير الحشو */
+            border-radius: 10px;
+            min-width: 70px; /* تصغير العرض الأدنى */
         }
         
-        /* تعديل الأحجام للموبايل */
-        @media (max-width: 640px) {
-            .node-box { padding: 8px 12px; border-radius: 12px; min-width: 80px; }
-            .node-text { font-size: 10px; }
-            .center-hub { width: 80px; height: 80px; }
-        }
-        /* تعديل الأحجام للكمبيوتر */
-        @media (min-width: 641px) {
-            .node-box { padding: 12px 20px; border-radius: 16px; min-width: 120px; }
-            .node-text { font-size: 14px; }
-            .center-hub { width: 110px; height: 110px; }
+        .node-text { font-size: 9px; font-weight: bold; color: white; white-space: nowrap; }
+
+        /* الدائرة المركزية المصغرة */
+        .center-hub { 
+            width: 70px; height: 70px; 
+            box-shadow: 0 0 30px rgba(59,130,246,0.2);
         }
 
         #options-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.92); z-index: 100; align-items: center; justify-content: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="center-hub absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/5 border-2 border-blue-500 rounded-full flex items-center justify-center z-30 shadow-[0_0_40px_rgba(59,130,246,0.3)]">
+    <div class="center-hub absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/5 border-2 border-blue-500 rounded-full flex items-center justify-center z-30">
         <div class="text-center">
-            <div class="text-blue-500 font-black sm:text-xl text-lg leading-none">TOMAS</div>
-            <div class="text-white/40 text-[7px] sm:text-[9px] tracking-[3px] mt-1 uppercase">Cloud</div>
+            <div class="text-blue-500 font-black text-sm leading-none">TOMAS</div>
+            <div class="text-white/40 text-[6px] tracking-[2px] mt-1">CLOUD</div>
         </div>
     </div>
 
     <div id="options-modal">
-        <div class="bg-slate-900 border-2 border-blue-500 p-6 rounded-3xl text-center shadow-2xl max-w-[280px] w-full mx-4">
-            <h2 id="modal-title" class="text-white font-bold mb-5 text-lg"></h2>
+        <div class="bg-slate-900 border border-blue-500/50 p-6 rounded-2xl text-center max-w-[250px] w-full mx-4">
+            <h2 id="modal-title" class="text-white font-bold mb-4 text-md"></h2>
             <div class="flex flex-col gap-3">
-                <button id="btn-url" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">فتح الرابط (URL)</button>
-                <button id="btn-html" class="bg-amber-500 text-white py-3 rounded-xl font-bold text-sm">عرض كود HTML</button>
-                <button onclick="closeModal()" class="text-slate-400 mt-2 text-xs">إلغاء</button>
+                <button id="btn-url" class="bg-blue-600 text-white py-2.5 rounded-lg font-bold text-xs">فتح الرابط (URL)</button>
+                <button id="btn-html" class="bg-amber-500 text-white py-2.5 rounded-lg font-bold text-xs">عرض كود HTML</button>
+                <button onclick="closeModal()" class="text-slate-500 mt-1 text-[10px]">إغلاق</button>
             </div>
         </div>
     </div>
@@ -94,8 +91,9 @@
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             
-            // تحديد نصف القطر بناءً على حجم الشاشة لضمان عدم الخروج من الحواف
-            const radius = Math.min(window.innerWidth, window.innerHeight) * 0.35;
+            // تصغير المسافة لتناسب شاشة الهاتف (Radius)
+            // جعلنا المسافة حوالي 30% من عرض الشاشة فقط ليظل كل شيء بالداخل
+            const radius = Math.min(window.innerWidth, window.innerHeight) * 0.30;
             
             const entries = Object.entries(nodes);
 
@@ -107,47 +105,34 @@
                 const line = document.createElement('div');
                 line.className = 'connector';
                 line.style.width = radius + 'px';
-                line.style.left = centerX + 'px'; line.style.top = centerY + 'px';
+                line.style.left = centerX + 'px'; 
+                line.style.top = centerY + 'px';
                 line.style.transform = `rotate(${angle}rad)`;
                 line.style.background = `linear-gradient(90deg, ${data.color}, transparent)`;
                 container.appendChild(line);
 
                 const nodeDiv = document.createElement('div');
-                nodeDiv.className = 'node-box border-2';
-                nodeDiv.style.setProperty('--node-color', data.color);
+                nodeDiv.className = 'node-box';
                 nodeDiv.style.borderColor = data.color;
+                nodeDiv.style.boxShadow = `0 0 10px ${data.color}33`;
                 
-                // حساب مكان المربع ليكون مركزه هو طرف السهم
-                nodeDiv.style.left = '0px'; nodeDiv.style.top = '0px';
-                nodeDiv.style.transform = `translate(${x - (window.innerWidth < 640 ? 40 : 60)}px, ${y - (window.innerWidth < 640 ? 20 : 25)}px)`;
+                // تحديد مكان المربعات بدقة في المنتصف
+                nodeDiv.style.left = (x - 35) + 'px'; 
+                nodeDiv.style.top = (y - 15) + 'px';
                 
-                nodeDiv.innerHTML = `<span class="node-text text-white font-bold whitespace-nowrap">${data.name}</span>`;
+                nodeDiv.innerHTML = `<span class="node-text">${data.name}</span>`;
                 
                 nodeDiv.onclick = () => {
                     document.getElementById('modal-title').innerText = data.name;
                     modal.style.display = 'flex';
-                    
-                    document.getElementById('btn-url').onclick = () => {
-                        if(data.url) window.open(data.url, '_blank');
-                        closeModal();
-                    };
-
-                    document.getElementById('btn-html').onclick = () => {
-                        if(data.html_code) {
-                            const newWin = window.open("", "_blank");
-                            newWin.document.write(data.html_code);
-                        }
-                        closeModal();
-                    };
+                    document.getElementById('btn-url').onclick = () => { if(data.url) window.open(data.url, '_blank'); closeModal(); };
+                    document.getElementById('btn-html').onclick = () => { if(data.html_code) { const nw = window.open(); nw.document.write(data.html_code); } closeModal(); };
                 };
                 container.appendChild(nodeDiv);
             });
         });
 
-        // تحديث عند تدوير الهاتف أو تغيير الحجم
-        window.addEventListener('resize', () => {
-            setTimeout(() => location.reload(), 200);
-        });
+        window.addEventListener('resize', () => location.reload());
     </script>
 </body>
 </html>
