@@ -3,49 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOMAS CLOUD - CODE VIEW</title>
+    <title>TOMAS CLOUD - VERTICAL CODE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
         body { background: #020617; overflow: hidden; font-family: 'Cairo', sans-serif; margin: 0; touch-action: none; }
         
-        .connector { position: absolute; height: 1px; transform-origin: left center; z-index: 10; opacity: 0.4; animation: flow 2s infinite linear; }
-        @keyframes flow { 0% { opacity: 0.2; } 50% { opacity: 0.7; } 100% { opacity: 0.2; } }
+        .connector { position: absolute; height: 1.5px; transform-origin: left center; z-index: 10; opacity: 0.4; animation: flow 2s infinite linear; }
+        @keyframes flow { 0% { opacity: 0.2; } 50% { opacity: 0.6; } 100% { opacity: 0.2; } }
 
-        .node-box { position: absolute; z-index: 20; backdrop-filter: blur(6px); background: rgba(15, 23, 42, 0.9); border-width: 1.5px; padding: 6px 10px; border-radius: 10px; cursor: pointer; }
+        .node-box { position: absolute; z-index: 20; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.9); border-width: 2px; padding: 6px 12px; border-radius: 12px; cursor: pointer; }
         .node-text { font-size: 10px; font-weight: bold; color: white; white-space: nowrap; }
 
-        /* نافذة الأكواد المصممة للموبايل */
-        #code-modal {
+        /* شاشة عرض الشفرة - مرتبة تحت بعضها */
+        #code-display-area {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 200; flex-direction: column; align-items: center; justify-content: center;
+            background: #000; z-index: 200; flex-direction: column; padding: 15px;
         }
-        pre { background: #1e293b; color: #38bdf8; padding: 15px; border-radius: 10px; overflow: auto; max-width: 90%; max-height: 60%; font-size: 12px; text-align: left; direction: ltr; border: 1px solid #334155; }
-        
+        #code-text { 
+            background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 10px; 
+            font-family: 'Courier New', Courier, monospace; font-size: 12px; 
+            overflow-y: auto; overflow-x: auto; flex-grow: 1;
+            /* السر هنا: تجعل الأكواد تظهر تحت بعضها وتدعم الفراغات */
+            white-space: pre; 
+            text-align: left; direction: ltr; border: 1px solid #1e293b;
+            line-height: 1.5;
+        }
+
         #options-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-blue-500/10 border-2 border-blue-500 rounded-full flex items-center justify-center z-30">
-        <div class="text-blue-500 font-black text-xs">TOMAS</div>
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-blue-500/10 border-2 border-blue-500 rounded-full flex items-center justify-center z-30">
+        <div class="text-center">
+            <span class="text-blue-500 font-black text-sm block">TOMAS</span>
+        </div>
     </div>
 
     <div id="options-modal">
-        <div class="bg-slate-900 border border-blue-500/50 p-6 rounded-2xl text-center max-w-[260px] w-full mx-4">
-            <h2 id="modal-title" class="text-white font-bold mb-4 text-sm"></h2>
+        <div class="bg-slate-900 border border-blue-500/50 p-6 rounded-2xl text-center max-w-[260px] w-full mx-4 shadow-2xl">
+            <h2 id="modal-title" class="text-white font-bold mb-5 text-sm"></h2>
             <div class="flex flex-col gap-3">
                 <button id="btn-url" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-xs">فتح الرابط (URL)</button>
-                <button id="btn-html" class="bg-amber-500 text-white py-3 rounded-xl font-bold text-xs">عرض كود HTML</button>
-                <button onclick="closeModals()" class="text-slate-500 mt-1 text-[10px]">إغلاق</button>
+                <button id="btn-html" class="bg-amber-500 text-white py-3 rounded-xl font-bold text-xs">عرض شفرة HTML</button>
+                <button onclick="closeAll()" class="text-slate-500 mt-2 text-[10px]">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <div id="code-modal">
-        <h3 class="text-amber-500 font-bold mb-4">كود المنصة البرمجي</h3>
-        <pre id="code-display"></pre>
-        <button onclick="closeModals()" class="mt-6 bg-red-500/20 text-red-500 px-6 py-2 rounded-full text-xs border border-red-500/50">إغلاق المعاينة</button>
+    <div id="code-display-area">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-amber-500 font-bold text-xs">Source Code (شفرة الموقع)</h3>
+            <button onclick="closeAll()" class="bg-red-600 text-white px-4 py-1 rounded-md text-[10px]">خروج</button>
+        </div>
+        <div id="code-text"></div>
     </div>
 
     <div id="network-container" class="relative w-screen h-screen"></div>
@@ -59,10 +71,10 @@
         const db = getDatabase(app);
 
         const optModal = document.getElementById('options-modal');
-        const codeModal = document.getElementById('code-modal');
-        const codeDisplay = document.getElementById('code-display');
+        const codeArea = document.getElementById('code-display-area');
+        const codeText = document.getElementById('code-text');
 
-        window.closeModals = () => { optModal.style.display = 'none'; codeModal.style.display = 'none'; };
+        window.closeAll = () => { optModal.style.display = 'none'; codeArea.style.display = 'none'; };
 
         onValue(ref(db, 'network/nodes'), (snapshot) => {
             const nodes = snapshot.val();
@@ -91,7 +103,7 @@
                 const nodeDiv = document.createElement('div');
                 nodeDiv.className = 'node-box';
                 nodeDiv.style.borderColor = data.color;
-                nodeDiv.style.left = (x - 40) + 'px'; nodeDiv.style.top = (y - 15) + 'px';
+                nodeDiv.style.left = (x - 45) + 'px'; nodeDiv.style.top = (y - 15) + 'px';
                 nodeDiv.innerHTML = `<span class="node-text">${data.name}</span>`;
                 
                 nodeDiv.onclick = () => {
@@ -100,14 +112,14 @@
                     
                     document.getElementById('btn-url').onclick = () => {
                         if(data.url) window.open(data.url, '_blank');
-                        closeModals();
+                        closeAll();
                     };
 
                     document.getElementById('btn-html').onclick = () => {
                         optModal.style.display = 'none';
-                        codeModal.style.display = 'flex';
-                        // تحويل الأكواد لنص عادي لكي لا ينفذها المتصفح
-                        codeDisplay.innerText = data.html_code || "لا يوجد كود متاح";
+                        codeArea.style.display = 'flex';
+                        // استخدام التنسيق الذي يحافظ على الأسطر تحت بعضها
+                        codeText.textContent = data.html_code || "لا توجد شفرة مضافة";
                     };
                 };
                 container.appendChild(nodeDiv);
