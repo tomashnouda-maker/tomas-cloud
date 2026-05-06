@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOMAS CLOUD NETWORK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
+        body { background: #020617; overflow: hidden; font-family: 'Cairo', sans-serif; margin: 0; }
+        
+        .connector { 
+            position: absolute; height: 2px; transform-origin: left center; 
+            z-index: 10; opacity: 0.6;
+            animation: flow 2s infinite linear;
+        }
+        @keyframes flow {
+            0% { filter: brightness(1); opacity: 0.4; }
+            50% { filter: brightness(2); opacity: 1; }
+            100% { filter: brightness(1); opacity: 0.4; }
+        }
+
+        .node-box {
+            position: absolute; z-index: 20;
+            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .node-box:hover { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 30px var(--node-color);
+        }
+
+        /* نافذة الخيارات */
+        #options-modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100;
+            align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white/5 border-2 border-blue-500 rounded-full flex items-center justify-center z-30 shadow-[0_0_60px_rgba(59,130,246,0.4)]">
+        <div class="text-center">
+            <div class="text-blue-500 font-black text-2xl leading-none">TOMAS</div>
+            <div class="text-white/40 text-[9px] tracking-[4px] mt-1">CLOUD</div>
+        </div>
+    </div>
+
+    <div id="options-modal">
+        <div class="bg-slate-900 border-2 border-blue-500 p-8 rounded-3xl text-center shadow-2xl max-w-sm w-full mx-4">
+            <h2 id="modal-title" class="text-white font-bold mb-6 text-xl">اختر إجراء</h2>
+            <div class="flex flex-col gap-4">
+                <button id="btn-url" class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition">فتح الرابط (URL)</button>
+                <button id="btn-html" class="bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl font-bold transition">عرض كود HTML</button>
+                <button onclick="closeModal()" class="text-slate-400 mt-2 text-sm underline">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="network-container" class="relative w-screen h-screen"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://tomascloudnetwork-default-rtdb.firebaseio.com" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const modal = document.getElementById('options-modal');
+        window.closeModal = () => modal.style.display = 'none';
+
+        onValue(ref(db, 'network/nodes'), (snapshot) => {
+            const nodes = snapshot.val();
+            const container = document.getElementById('network-container');
+            container.innerHTML = ''; 
+            if(!nodes) return;
+
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const radius = 280;
+            const entries = Object.entries(nodes);
+
+            entries.forEach(([id, data], index) => {
+                const angle = (index / entries.length) * Math.PI * 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const line = document.createElement('div');
+                line.className = 'connector';
+                line.style.width = radius + 'px';
+                line.style.left = centerX + 'px'; line.style.top = centerY + 'px';
+                line.style.transform = `rotate(${angle}rad)`;
+                line.style.background = `linear-gradient(90deg, ${data.color}, transparent)`;
+                container.appendChild(line);
+
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'node-box px-8 py-4 rounded-2xl border-2';
+                nodeDiv.style.setProperty('--node-color', data.color);
+                nodeDiv.style.borderColor = data.color;
+                nodeDiv.style.left = (x - 70) + 'px'; nodeDiv.style.top = (y - 30) + 'px';
+                nodeDiv.innerHTML = `<span class="text-white font-black text-sm">${data.name}</span>`;
+                
+                // وظيفة تظهر الاختيارات عند الضغط
+                nodeDiv.onclick = () => {
+                    document.getElementById('modal-title').innerText = data.name;
+                    modal.style.display = 'flex';
+                    
+                    // خيار الـ URL
+                    document.getElementById('btn-url').onclick = () => {
+                        if(data.url) window.open(data.url, '_blank');
+                        closeModal();
+                    };
+
+                    // خيار الـ HTML
+                    document.getElementById('btn-html').onclick = () => {
+                        if(data.html_code) {
+                            const newWin = window.open("", "_blank");
+                            newWin.document.write(data.html_code);
+                        }
+                        closeModal();
+                    };
+                };
+
+                container.appendChild(nodeDiv);
+            });
+        });
+    </script>
+</body>
+</html>
