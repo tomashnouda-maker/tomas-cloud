@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOMAS CLOUD - VERTICAL CODE</title>
+    <title>TOMAS CLOUD - SOURCE VIEW</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
@@ -15,19 +15,20 @@
         .node-box { position: absolute; z-index: 20; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.9); border-width: 2px; padding: 6px 12px; border-radius: 12px; cursor: pointer; }
         .node-text { font-size: 10px; font-weight: bold; color: white; white-space: nowrap; }
 
-        /* شاشة عرض الشفرة - مرتبة تحت بعضها */
+        /* شاشة عرض الشفرة المحدثة لتكون تحت بعضها */
         #code-display-area {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 200; flex-direction: column; padding: 15px;
         }
         #code-text { 
             background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 10px; 
-            font-family: 'Courier New', Courier, monospace; font-size: 12px; 
-            overflow-y: auto; overflow-x: auto; flex-grow: 1;
-            /* السر هنا: تجعل الأكواد تظهر تحت بعضها وتدعم الفراغات */
-            white-space: pre; 
+            font-family: 'Courier New', monospace; font-size: 12px; 
+            overflow: auto; flex-grow: 1;
+            /* التعديل السحري: pre-wrap يجعل الكود يظهر تحت بعضه */
+            white-space: pre-wrap; 
+            word-wrap: break-word;
             text-align: left; direction: ltr; border: 1px solid #1e293b;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         #options-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
@@ -118,7 +119,7 @@
                     document.getElementById('btn-html').onclick = () => {
                         optModal.style.display = 'none';
                         codeArea.style.display = 'flex';
-                        // استخدام التنسيق الذي يحافظ على الأسطر تحت بعضها
+                        // السر في استخدام textContent بدلاً من innerHTML
                         codeText.textContent = data.html_code || "لا توجد شفرة مضافة";
                     };
                 };
@@ -128,3 +129,4 @@
     </script>
 </body>
 </html>
+            
