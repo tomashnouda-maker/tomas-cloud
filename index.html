@@ -3,70 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOMAS CLOUD MOBILE</title>
+    <title>TOMAS CLOUD - CODE VIEW</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
         body { background: #020617; overflow: hidden; font-family: 'Cairo', sans-serif; margin: 0; touch-action: none; }
         
-        /* الأسهم الرفيعة */
-        .connector { 
-            position: absolute; height: 1px; transform-origin: left center; 
-            z-index: 10; opacity: 0.4;
-            animation: flow 2s infinite linear;
-        }
-        @keyframes flow {
-            0% { filter: brightness(1); opacity: 0.2; }
-            50% { filter: brightness(2); opacity: 0.7; }
-            100% { filter: brightness(1); opacity: 0.2; }
-        }
+        .connector { position: absolute; height: 1px; transform-origin: left center; z-index: 10; opacity: 0.4; animation: flow 2s infinite linear; }
+        @keyframes flow { 0% { opacity: 0.2; } 50% { opacity: 0.7; } 100% { opacity: 0.2; } }
 
-        /* المربعات المصغرة للهاتف */
-        .node-box {
-            position: absolute; z-index: 20;
-            backdrop-filter: blur(6px);
-            background: rgba(15, 23, 42, 0.9);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            border-width: 1.5px;
-            padding: 6px 10px; /* تصغير الحشو */
-            border-radius: 10px;
-            min-width: 70px; /* تصغير العرض الأدنى */
-        }
-        
-        .node-text { font-size: 9px; font-weight: bold; color: white; white-space: nowrap; }
+        .node-box { position: absolute; z-index: 20; backdrop-filter: blur(6px); background: rgba(15, 23, 42, 0.9); border-width: 1.5px; padding: 6px 10px; border-radius: 10px; cursor: pointer; }
+        .node-text { font-size: 10px; font-weight: bold; color: white; white-space: nowrap; }
 
-        /* الدائرة المركزية المصغرة */
-        .center-hub { 
-            width: 70px; height: 70px; 
-            box-shadow: 0 0 30px rgba(59,130,246,0.2);
-        }
-
-        #options-modal {
+        /* نافذة الأكواد المصممة للموبايل */
+        #code-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92); z-index: 100; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.95); z-index: 200; flex-direction: column; align-items: center; justify-content: center;
         }
+        pre { background: #1e293b; color: #38bdf8; padding: 15px; border-radius: 10px; overflow: auto; max-width: 90%; max-height: 60%; font-size: 12px; text-align: left; direction: ltr; border: 1px solid #334155; }
+        
+        #options-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div class="center-hub absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/5 border-2 border-blue-500 rounded-full flex items-center justify-center z-30">
-        <div class="text-center">
-            <div class="text-blue-500 font-black text-sm leading-none">TOMAS</div>
-            <div class="text-white/40 text-[6px] tracking-[2px] mt-1">CLOUD</div>
-        </div>
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-blue-500/10 border-2 border-blue-500 rounded-full flex items-center justify-center z-30">
+        <div class="text-blue-500 font-black text-xs">TOMAS</div>
     </div>
 
     <div id="options-modal">
-        <div class="bg-slate-900 border border-blue-500/50 p-6 rounded-2xl text-center max-w-[250px] w-full mx-4">
-            <h2 id="modal-title" class="text-white font-bold mb-4 text-md"></h2>
+        <div class="bg-slate-900 border border-blue-500/50 p-6 rounded-2xl text-center max-w-[260px] w-full mx-4">
+            <h2 id="modal-title" class="text-white font-bold mb-4 text-sm"></h2>
             <div class="flex flex-col gap-3">
-                <button id="btn-url" class="bg-blue-600 text-white py-2.5 rounded-lg font-bold text-xs">فتح الرابط (URL)</button>
-                <button id="btn-html" class="bg-amber-500 text-white py-2.5 rounded-lg font-bold text-xs">عرض كود HTML</button>
-                <button onclick="closeModal()" class="text-slate-500 mt-1 text-[10px]">إغلاق</button>
+                <button id="btn-url" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-xs">فتح الرابط (URL)</button>
+                <button id="btn-html" class="bg-amber-500 text-white py-3 rounded-xl font-bold text-xs">عرض كود HTML</button>
+                <button onclick="closeModals()" class="text-slate-500 mt-1 text-[10px]">إغلاق</button>
             </div>
         </div>
+    </div>
+
+    <div id="code-modal">
+        <h3 class="text-amber-500 font-bold mb-4">كود المنصة البرمجي</h3>
+        <pre id="code-display"></pre>
+        <button onclick="closeModals()" class="mt-6 bg-red-500/20 text-red-500 px-6 py-2 rounded-full text-xs border border-red-500/50">إغلاق المعاينة</button>
     </div>
 
     <div id="network-container" class="relative w-screen h-screen"></div>
@@ -79,8 +58,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const modal = document.getElementById('options-modal');
-        window.closeModal = () => modal.style.display = 'none';
+        const optModal = document.getElementById('options-modal');
+        const codeModal = document.getElementById('code-modal');
+        const codeDisplay = document.getElementById('code-display');
+
+        window.closeModals = () => { optModal.style.display = 'none'; codeModal.style.display = 'none'; };
 
         onValue(ref(db, 'network/nodes'), (snapshot) => {
             const nodes = snapshot.val();
@@ -90,11 +72,7 @@
 
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
-            
-            // تصغير المسافة لتناسب شاشة الهاتف (Radius)
-            // جعلنا المسافة حوالي 30% من عرض الشاشة فقط ليظل كل شيء بالداخل
-            const radius = Math.min(window.innerWidth, window.innerHeight) * 0.30;
-            
+            const radius = Math.min(window.innerWidth, window.innerHeight) * 0.32;
             const entries = Object.entries(nodes);
 
             entries.forEach(([id, data], index) => {
@@ -105,8 +83,7 @@
                 const line = document.createElement('div');
                 line.className = 'connector';
                 line.style.width = radius + 'px';
-                line.style.left = centerX + 'px'; 
-                line.style.top = centerY + 'px';
+                line.style.left = centerX + 'px'; line.style.top = centerY + 'px';
                 line.style.transform = `rotate(${angle}rad)`;
                 line.style.background = `linear-gradient(90deg, ${data.color}, transparent)`;
                 container.appendChild(line);
@@ -114,25 +91,28 @@
                 const nodeDiv = document.createElement('div');
                 nodeDiv.className = 'node-box';
                 nodeDiv.style.borderColor = data.color;
-                nodeDiv.style.boxShadow = `0 0 10px ${data.color}33`;
-                
-                // تحديد مكان المربعات بدقة في المنتصف
-                nodeDiv.style.left = (x - 35) + 'px'; 
-                nodeDiv.style.top = (y - 15) + 'px';
-                
+                nodeDiv.style.left = (x - 40) + 'px'; nodeDiv.style.top = (y - 15) + 'px';
                 nodeDiv.innerHTML = `<span class="node-text">${data.name}</span>`;
                 
                 nodeDiv.onclick = () => {
                     document.getElementById('modal-title').innerText = data.name;
-                    modal.style.display = 'flex';
-                    document.getElementById('btn-url').onclick = () => { if(data.url) window.open(data.url, '_blank'); closeModal(); };
-                    document.getElementById('btn-html').onclick = () => { if(data.html_code) { const nw = window.open(); nw.document.write(data.html_code); } closeModal(); };
+                    optModal.style.display = 'flex';
+                    
+                    document.getElementById('btn-url').onclick = () => {
+                        if(data.url) window.open(data.url, '_blank');
+                        closeModals();
+                    };
+
+                    document.getElementById('btn-html').onclick = () => {
+                        optModal.style.display = 'none';
+                        codeModal.style.display = 'flex';
+                        // تحويل الأكواد لنص عادي لكي لا ينفذها المتصفح
+                        codeDisplay.innerText = data.html_code || "لا يوجد كود متاح";
+                    };
                 };
                 container.appendChild(nodeDiv);
             });
         });
-
-        window.addEventListener('resize', () => location.reload());
     </script>
 </body>
 </html>
