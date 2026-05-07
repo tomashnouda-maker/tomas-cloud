@@ -1,192 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOMAS CLOUD NETWORK</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Tomas Cloud Network | Pro Edition</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Cairo:wght@600;900&display=swap');
-        
+        /* خلفية احترافية متدرجة بدلاً من الأسود */
         body { 
-            background: #020617; 
-            overflow: hidden; 
-            font-family: 'Cairo', sans-serif; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
-            touch-action: none; 
+            background: radial-gradient(circle, #1a2a6c, #b21f1f, #fdbb2d); /* تدرج لوني احترافي */
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white; 
+            overflow: hidden; 
         }
 
-        /* الدائرة المركزية مصغرة لتناسب الموبايل */
-        #center-node {
-            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-            width: 75px; height: 75px; background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            z-index: 50; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); text-align: center;
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        /* صندوق عرض الكود - تحت بعضه ومنظم */
-        #code-box {
-            background: #010409;
-            color: #7ee787;
-            padding: 12px;
-            border-radius: 8px;
-            font-family: 'monospace';
-            font-size: 10px;
-            line-height: 1.4;
-            height: 60vh;
-            overflow-y: auto;
-            overflow-x: hidden;
-            text-align: left;
-            direction: ltr;
-            width: 92vw;
-            border: 1px solid #30363d;
-            white-space: pre-wrap; /* لجعل الكود يظهر تحت بعضه */
-            word-wrap: break-word;
-            word-break: break-all;
-        }
-
-        .connector { 
-            position: absolute; 
-            height: 1.2px; 
-            transform-origin: left center; 
-            z-index: 10; 
-            opacity: 0.5; 
-        }
+        #mynetwork { width: 100vw; height: 100vh; }
         
-        .user-node { 
-            position: absolute; z-index: 30; background: #1e293b; 
-            border: 2px solid var(--u-color); padding: 4px 10px; border-radius: 10px; 
-            font-weight: 900; font-size: 10px; color: white; 
-            transform: translate(-50%, -50%); box-shadow: 0 0 10px var(--u-color); 
+        /* النافذة المنبثقة بتصميم زجاجي */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); 
+            backdrop-filter: blur(12px);
         }
-
-        .project-node { 
-            position: absolute; z-index: 20; background: #0f172a; 
-            border: 1px solid var(--u-color); padding: 4px 8px; border-radius: 5px; 
-            font-size: 9px; color: #cbd5e1; transform: translate(-50%, -50%); 
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5% auto; padding: 30px; border-radius: 25px;
+            width: 80%; max-height: 80vh; overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.37);
+            color: #fff;
         }
+        .close { float: left; color: #ff4b2b; font-size: 35px; cursor: pointer; }
+        
+        .btn-group { margin: 25px 0; display: flex; gap: 15px; }
+        .btn {
+            padding: 12px 30px; border: none; border-radius: 15px;
+            cursor: pointer; font-weight: bold; text-decoration: none;
+            transition: 0.3s; color: white;
+        }
+        .btn-visit { background: linear-gradient(to right, #00c6ff, #0072ff); }
+        .btn-code { background: linear-gradient(to right, #11998e, #38ef7d); }
 
-        #modal, #code-viewer { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); 
-            z-index: 100; align-items: center; justify-content: center; flex-direction: column; 
+        pre {
+            background-color: #0d0d0d; color: #00ff00; 
+            padding: 20px; border-radius: 15px; border: 1px solid #333;
+            direction: ltr; text-align: left; white-space: pre-wrap; 
+            font-family: 'Consolas', monospace; box-shadow: inset 0 0 10px #000;
         }
     </style>
 </head>
 <body>
 
-    <!-- الدائرة المركزية -->
-    <div id="center-node">
-        <div class="px-1">
-            <div class="text-[7px] text-blue-400 font-bold tracking-widest uppercase">Tomas</div>
-            <div class="text-[8px] font-black text-white leading-tight uppercase">Network</div>
+<div id="mynetwork"></div>
+
+<div id="optionsModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="projectName" style="color: #fdbb2d;">اسم الموقع</h2>
+        <div class="btn-group">
+            <a id="visitLink" href="#" target="_blank" class="btn btn-visit">دخول الموقع</a>
+            <button class="btn btn-code" onclick="toggleCode()">عرض الشفرة HTML</button>
+        </div>
+        <div id="codeSection" style="display:none;">
+            <pre id="htmlCodeDisplay"></pre>
         </div>
     </div>
+</div>
 
-    <div id="canvas" class="relative w-screen h-screen"></div>
+<script>
+    const firebaseURL = "https://tomascloudnetwork-default-rtdb.firebaseio.com/.json";
 
-    <!-- نافذة التحكم بالموقع -->
-    <div id="modal" onclick="this.style.display='none'">
-        <div class="bg-slate-900 border border-blue-500 p-6 rounded-2xl w-[80%] max-w-xs text-center" onclick="event.stopPropagation()">
-            <h3 id="m-title" class="text-md font-bold mb-6 text-white border-b border-slate-700 pb-2"></h3>
-            <div class="flex flex-col gap-3">
-                <button id="btn-open" class="bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95">OPEN URL</button>
-                <button id="btn-show-code" class="bg-slate-700 text-white py-3 rounded-xl font-bold active:scale-95">VIEW SOURCE</button>
-            </div>
-        </div>
-    </div>
+    async function updateNetwork() {
+        try {
+            const response = await fetch(firebaseURL);
+            const data = await response.json();
+            const users = data.network.users;
 
-    <!-- شاشة عرض السورس كود -->
-    <div id="code-viewer">
-        <div class="text-blue-400 text-[10px] mb-2 font-bold uppercase tracking-widest">Source Code Archive</div>
-        <pre id="code-box"></pre>
-        <button onclick="document.getElementById('code-viewer').style.display='none'" class="mt-4 bg-red-600 text-white px-10 py-3 rounded-full font-bold text-sm active:scale-95">CLOSE</button>
-    </div>
+            const nodes = [];
+            const edges = [];
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+            // العقدة المركزية الكبرى (تصميم زجاجي أبيض)
+            nodes.push({ 
+                id: 'main', label: 'TOMAS\nNETWORK', shape: 'circle',
+                color: { background: 'rgba(255,255,255,0.9)', border: '#fff' },
+                font: { size: 22, color: '#000', bold: true },
+                shadow: { enabled: true, color: 'rgba(255,255,255,0.5)', size: 20 }
+            });
 
-        const firebaseConfig = { databaseURL: "https://tomascloudnetwork-default-rtdb.firebaseio.com" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const canvas = document.getElementById('canvas');
+            Object.keys(users).forEach(userKey => {
+                const user = users[userKey];
+                const userColor = user.color || '#ffffff';
 
-        // المسار كما هو بدون تغيير network/users
-        onValue(ref(db, 'network/users'), (snapshot) => {
-            canvas.innerHTML = '';
-            const users = snapshot.val();
-            if (!users) return;
+                // عقدة المستخدم
+                nodes.push({
+                    id: userKey,
+                    label: user.name || userKey,
+                    shape: 'circle',
+                    size: 30,
+                    color: { background: '#fff', border: userColor },
+                    font: { color: '#000', size: 16, bold: true },
+                    borderWidth: 4,
+                    shadow: { enabled: true, color: userColor, size: 15 }
+                });
 
-            const cx = window.innerWidth / 2;
-            const cy = window.innerHeight / 2;
-            const userKeys = Object.keys(users);
-            
-            userKeys.forEach((uKey, i) => {
-                const user = users[uKey];
-                const uAngle = (i / userKeys.length) * Math.PI * 2;
-                
-                // تصغير المسافات لتناسب شاشات الموبايل
-                const ux = cx + 90 * Math.cos(uAngle);
-                const uy = cy + 90 * Math.sin(uAngle);
-
-                drawLink(cx, cy, ux, uy, user.color || '#3b82f6');
-
-                const uEl = document.createElement('div');
-                uEl.className = 'user-node';
-                uEl.style.left = ux + 'px'; uEl.style.top = uy + 'px';
-                uEl.style.setProperty('--u-color', user.color || '#3b82f6');
-                uEl.innerText = user.name;
-                canvas.appendChild(uEl);
+                edges.push({ from: 'main', to: userKey, color: { color: '#fff' }, width: 3 });
 
                 if (user.projects) {
-                    const pKeys = Object.keys(user.projects);
-                    pKeys.forEach((pKey, j) => {
+                    Object.keys(user.projects).forEach(pKey => {
                         const project = user.projects[pKey];
-                        const pAngle = uAngle + (j - (pKeys.length - 1) / 2) * 0.75;
+                        const projectId = `${userKey}_${pKey}`;
                         
-                        // تصغير مسافة المشاريع عن المستخدم
-                        const px = ux + 65 * Math.cos(pAngle);
-                        const py = uy + 65 * Math.sin(pAngle);
+                        // الحل لعرض اسم الموقع بدقة:
+                        // إذا وجد name داخل المشروع سيعرضه، وإذا لم يجد سيعرض p1 أو p2
+                        const siteTitle = project.name ? project.name : pKey;
 
-                        drawLink(ux, uy, px, py, user.color || '#3b82f6');
+                        nodes.push({
+                            id: projectId,
+                            label: siteTitle,
+                            shape: 'box',
+                            margin: 10,
+                            color: { background: 'rgba(0,0,0,0.5)', border: userColor },
+                            font: { color: '#fff', size: 14 },
+                            borderRadius: 10,
+                            data: project 
+                        });
 
-                        const pEl = document.createElement('div');
-                        pEl.className = 'project-node';
-                        pEl.style.left = px + 'px'; pEl.style.top = py + 'px';
-                        pEl.style.setProperty('--u-color', user.color || '#3b82f6');
-                        pEl.innerText = project.name;
-                        
-                        pEl.onclick = () => {
-                            document.getElementById('m-title').innerText = project.name;
-                            document.getElementById('modal').style.display = 'flex';
-                            document.getElementById('btn-open').onclick = () => window.open(project.url, '_blank');
-                            document.getElementById('btn-show-code').onclick = () => {
-                                document.getElementById('modal').style.display = 'none';
-                                document.getElementById('code-viewer').style.display = 'flex';
-                                // عرض الكود بتنسيق الأسطر المتتالية
-                                document.getElementById('code-box').textContent = project.html_code;
-                            };
-                        };
-                        canvas.appendChild(pEl);
+                        edges.push({ from: userKey, to: projectId, color: { color: userColor }, width: 2, dashes: true });
                     });
                 }
             });
-        });
 
-        function drawLink(x1, y1, x2, y2, color) {
-            const dist = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
-            const angle = Math.atan2(y2-y1, x2-x1);
-            const line = document.createElement('div');
-            line.className = 'connector';
-            line.style.width = dist + 'px';
-            line.style.left = x1 + 'px';
-            line.style.top = y1 + 'px';
-            line.style.transform = `rotate(${angle}rad)`;
-            line.style.background = `linear-gradient(90deg, #3b82f6, ${color})`;
-            canvas.appendChild(line);
-        }
-    </script>
+            const container = document.getElementById('mynetwork');
+            const networkData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+            const options = {
+                physics: { enabled: true, solver: 'repulsion', repulsion: { nodeDistance: 150 } },
+                interaction: { hover: true }
+            };
+
+            const network = new vis.Network(container, networkData, options);
+
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const clickedNode = nodes.find(n => n.id === nodeId);
+                    if (clickedNode && clickedNode.data) showModal(clickedNode.label, clickedNode.data);
+                }
+            });
+
+        } catch (error) { console.error(error); }
+    }
+
+    function showModal(name, project) {
+        document.getElementById('projectName').innerText = name;
+        document.getElementById('visitLink').href = project.url || "#";
+        document.getElementById('htmlCodeDisplay').textContent = formatHTML(project.html_code || "");
+        document.getElementById('codeSection').style.display = 'none';
+        document.getElementById('optionsModal').style.display = 'block';
+    }
+
+    function formatHTML(html) {
+        let tab = '    '; let result = ''; let indent= '';
+        html.split(/>\s*</).forEach(function(element) {
+            if (element.match( /^\/\w/ )) indent = indent.substring(tab.length);
+            result += indent + '<' + element + '>\r\n';
+            if (element.match( /^<?\w[^>]*[^\/]$/ )) indent += tab;
+        });
+        return result.substring(1, result.length-3);
+    }
+
+    function closeModal() { document.getElementById('optionsModal').style.display = 'none'; }
+    function toggleCode() {
+        const sec = document.getElementById('codeSection');
+        sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // تحديث تلقائي كل 10 ثوانٍ لجلب أي إضافة جديدة من فيربيس
+    setInterval(updateNetwork, 10000); 
+    updateNetwork();
+</script>
+
 </body>
 </html>
-
