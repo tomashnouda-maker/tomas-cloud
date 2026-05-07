@@ -1,132 +1,198 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOMAS CLOUD - SOURCE VIEW</title>
+    <title>TOMAS CLOUD NETWORK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap');
-        body { background: #020617; overflow: hidden; font-family: 'Cairo', sans-serif; margin: 0; touch-action: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Cairo:wght@600;900&display=swap');
         
-        .connector { position: absolute; height: 1.5px; transform-origin: left center; z-index: 10; opacity: 0.4; animation: flow 2s infinite linear; }
-        @keyframes flow { 0% { opacity: 0.2; } 50% { opacity: 0.6; } 100% { opacity: 0.2; } }
-
-        .node-box { position: absolute; z-index: 20; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.9); border-width: 2px; padding: 6px 12px; border-radius: 12px; cursor: pointer; }
-        .node-text { font-size: 10px; font-weight: bold; color: white; white-space: nowrap; }
-
-        /* شاشة عرض الشفرة المحدثة لتكون تحت بعضها */
-        #code-display-area {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 200; flex-direction: column; padding: 15px;
-        }
-        #code-text { 
-            background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 10px; 
-            font-family: 'Courier New', monospace; font-size: 12px; 
-            overflow: auto; flex-grow: 1;
-            /* التعديل السحري: pre-wrap يجعل الكود يظهر تحت بعضه */
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-            text-align: left; direction: ltr; border: 1px solid #1e293b;
-            line-height: 1.6;
+        body { 
+            background: #020617; 
+            overflow: hidden; 
+            font-family: 'Cairo', sans-serif; 
+            margin: 0; 
+            touch-action: none; 
         }
 
-        #options-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
+        /* شريط عداد الزيارات العلوي */
+        #visit-counter {
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px);
+            border: 1px solid #3b82f6; color: white; padding: 5px 20px;
+            border-radius: 50px; font-size: 11px; z-index: 200;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            white-space: nowrap; font-weight: bold;
+        }
+
+        /* الدائرة المركزية مصغرة */
+        #center-node {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            width: 70px; height: 70px; background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            z-index: 50; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); text-align: center;
+        }
+
+        /* صندوق عرض الكود - حل مشكلة السطر الواحد */
+        #code-box {
+            background: #010409; color: #7ee787; padding: 12px; border-radius: 8px;
+            font-family: 'monospace'; font-size: 10px; line-height: 1.4;
+            height: 60vh; overflow-y: auto; overflow-x: hidden; text-align: left;
+            direction: ltr; width: 92vw; border: 1px solid #30363d;
+            white-space: pre-wrap; word-wrap: break-word; word-break: break-all;
+        }
+
+        .connector { position: absolute; height: 1.2px; transform-origin: left center; z-index: 10; opacity: 0.5; }
+        
+        .user-node { 
+            position: absolute; z-index: 30; background: #1e293b; 
+            border: 2px solid var(--u-color); padding: 4px 8px; border-radius: 8px; 
+            font-weight: 900; font-size: 10px; color: white; 
+            transform: translate(-50%, -50%); box-shadow: 0 0 8px var(--u-color); 
+        }
+
+        .project-node { 
+            position: absolute; z-index: 20; background: #0f172a; 
+            border: 1px solid var(--u-color); padding: 3px 6px; border-radius: 4px; 
+            font-size: 9px; color: #cbd5e1; transform: translate(-50%, -50%); 
+        }
+
+        #modal, #code-viewer { 
+            display: none; position: fixed; inset: 0; 
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); 
+            z-index: 100; align-items: center; justify-content: center; flex-direction: column; 
+        }
     </style>
 </head>
 <body>
 
-    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-blue-500/10 border-2 border-blue-500 rounded-full flex items-center justify-center z-30">
-        <div class="text-center">
-            <span class="text-blue-500 font-black text-sm block">TOMAS</span>
+    <!-- عداد الزيارات الإجمالي -->
+    <div id="visit-counter">
+        إجمالي زيارات المنصات: <span id="total-visits" class="text-blue-400">0</span>
+    </div>
+
+    <div id="center-node">
+        <div class="px-1">
+            <div class="text-[6px] text-blue-400 font-bold tracking-widest uppercase">Tomas</div>
+            <div class="text-[7px] font-black text-white leading-tight uppercase">Network</div>
         </div>
     </div>
 
-    <div id="options-modal">
-        <div class="bg-slate-900 border border-blue-500/50 p-6 rounded-2xl text-center max-w-[260px] w-full mx-4 shadow-2xl">
-            <h2 id="modal-title" class="text-white font-bold mb-5 text-sm"></h2>
+    <div id="canvas" class="relative w-screen h-screen"></div>
+
+    <div id="modal" onclick="this.style.display='none'">
+        <div class="bg-slate-900 border border-blue-500 p-5 rounded-2xl w-[75%] max-w-xs text-center" onclick="event.stopPropagation()">
+            <h3 id="m-title" class="text-md font-bold mb-1 text-white"></h3>
+            <div id="p-visits" class="text-[9px] text-slate-400 mb-4">زيارات هذه المنصة: 0</div>
             <div class="flex flex-col gap-3">
-                <button id="btn-url" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-xs">فتح الرابط (URL)</button>
-                <button id="btn-html" class="bg-amber-500 text-white py-3 rounded-xl font-bold text-xs">عرض شفرة HTML</button>
-                <button onclick="closeAll()" class="text-slate-500 mt-2 text-[10px]">إلغاء</button>
+                <button id="btn-open" class="bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95">OPEN URL</button>
+                <button id="btn-show-code" class="bg-slate-700 text-white py-3 rounded-xl font-bold active:scale-95">VIEW SOURCE</button>
             </div>
         </div>
     </div>
 
-    <div id="code-display-area">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-amber-500 font-bold text-xs">Source Code (شفرة الموقع)</h3>
-            <button onclick="closeAll()" class="bg-red-600 text-white px-4 py-1 rounded-md text-[10px]">خروج</button>
-        </div>
-        <div id="code-text"></div>
+    <div id="code-viewer">
+        <div class="text-blue-400 text-[10px] mb-2 font-bold uppercase tracking-widest">Source Code Archive</div>
+        <pre id="code-box"></pre>
+        <button onclick="document.getElementById('code-viewer').style.display='none'" class="mt-4 bg-red-600 text-white px-8 py-2 rounded-full font-bold text-sm active:scale-95">CLOSE</button>
     </div>
-
-    <div id="network-container" class="relative w-screen h-screen"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
         const firebaseConfig = { databaseURL: "https://tomascloudnetwork-default-rtdb.firebaseio.com" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const canvas = document.getElementById('canvas');
 
-        const optModal = document.getElementById('options-modal');
-        const codeArea = document.getElementById('code-display-area');
-        const codeText = document.getElementById('code-text');
+        onValue(ref(db, 'network/users'), (snapshot) => {
+            canvas.innerHTML = '';
+            const users = snapshot.val();
+            if (!users) return;
 
-        window.closeAll = () => { optModal.style.display = 'none'; codeArea.style.display = 'none'; };
+            let totalVisits = 0;
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            const userKeys = Object.keys(users);
+            
+            userKeys.forEach((uKey, i) => {
+                const user = users[uKey];
+                const uAngle = (i / userKeys.length) * Math.PI * 2;
+                const ux = cx + 95 * Math.cos(uAngle);
+                const uy = cy + 95 * Math.sin(uAngle);
 
-        onValue(ref(db, 'network/nodes'), (snapshot) => {
-            const nodes = snapshot.val();
-            const container = document.getElementById('network-container');
-            container.innerHTML = ''; 
-            if(!nodes) return;
+                drawLink(cx, cy, ux, uy, user.color || '#3b82f6');
 
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            const radius = Math.min(window.innerWidth, window.innerHeight) * 0.32;
-            const entries = Object.entries(nodes);
+                const uEl = document.createElement('div');
+                uEl.className = 'user-node';
+                uEl.style.left = ux + 'px'; uEl.style.top = uy + 'px';
+                uEl.style.setProperty('--u-color', user.color || '#3b82f6');
+                uEl.innerText = user.name;
+                canvas.appendChild(uEl);
 
-            entries.forEach(([id, data], index) => {
-                const angle = (index / entries.length) * Math.PI * 2;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
+                if (user.projects) {
+                    const pKeys = Object.keys(user.projects);
+                    pKeys.forEach((pKey, j) => {
+                        const project = user.projects[pKey];
+                        const projectVisits = project.visits || 0;
+                        totalVisits += projectVisits;
 
-                const line = document.createElement('div');
-                line.className = 'connector';
-                line.style.width = radius + 'px';
-                line.style.left = centerX + 'px'; line.style.top = centerY + 'px';
-                line.style.transform = `rotate(${angle}rad)`;
-                line.style.background = `linear-gradient(90deg, ${data.color}, transparent)`;
-                container.appendChild(line);
+                        const pAngle = uAngle + (j - (pKeys.length - 1) / 2) * 0.7;
+                        const px = ux + 70 * Math.cos(pAngle);
+                        const py = uy + 70 * Math.sin(pAngle);
 
-                const nodeDiv = document.createElement('div');
-                nodeDiv.className = 'node-box';
-                nodeDiv.style.borderColor = data.color;
-                nodeDiv.style.left = (x - 45) + 'px'; nodeDiv.style.top = (y - 15) + 'px';
-                nodeDiv.innerHTML = `<span class="node-text">${data.name}</span>`;
-                
-                nodeDiv.onclick = () => {
-                    document.getElementById('modal-title').innerText = data.name;
-                    optModal.style.display = 'flex';
-                    
-                    document.getElementById('btn-url').onclick = () => {
-                        if(data.url) window.open(data.url, '_blank');
-                        closeAll();
-                    };
+                        drawLink(ux, uy, px, py, user.color || '#3b82f6');
 
-                    document.getElementById('btn-html').onclick = () => {
-                        optModal.style.display = 'none';
-                        codeArea.style.display = 'flex';
-                        // السر في استخدام textContent بدلاً من innerHTML
-                        codeText.textContent = data.html_code || "لا توجد شفرة مضافة";
-                    };
-                };
-                container.appendChild(nodeDiv);
+                        const pEl = document.createElement('div');
+                        pEl.className = 'project-node';
+                        pEl.style.left = px + 'px'; pEl.style.top = py + 'px';
+                        pEl.style.setProperty('--u-color', user.color || '#3b82f6');
+                        pEl.innerText = project.name;
+                        
+                        pEl.onclick = () => {
+                            document.getElementById('m-title').innerText = project.name;
+                            document.getElementById('p-visits').innerText = `زيارات هذه المنصة: ${projectVisits}`;
+                            document.getElementById('modal').style.display = 'flex';
+                            
+                            // عند الضغط على الرابط: زيادة العداد وفتح الموقع
+                            document.getElementById('btn-open').onclick = () => {
+                                // تحديث العداد في Firebase
+                                const projectPath = `network/users/${uKey}/projects/${pKey}`;
+                                update(ref(db, projectPath), {
+                                    visits: increment(1)
+                                });
+                                window.open(project.url, '_blank');
+                            };
+
+                            document.getElementById('btn-show-code').onclick = () => {
+                                document.getElementById('modal').style.display = 'none';
+                                document.getElementById('code-viewer').style.display = 'flex';
+                                document.getElementById('code-box').textContent = project.html_code;
+                            };
+                        };
+                        canvas.appendChild(pEl);
+                    });
+                }
             });
+            // تحديث الرقم الإجمالي في أعلى الشاشة
+            document.getElementById('total-visits').innerText = totalVisits;
         });
+
+        function drawLink(x1, y1, x2, y2, color) {
+            const dist = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+            const angle = Math.atan2(y2-y1, x2-x1);
+            const line = document.createElement('div');
+            line.className = 'connector';
+            line.style.width = dist + 'px';
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            line.style.transform = `rotate(${angle}rad)`;
+            line.style.background = `linear-gradient(90deg, #3b82f6, ${color})`;
+            canvas.appendChild(line);
+        }
     </script>
 </body>
 </html>
-            
+
