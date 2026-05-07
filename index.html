@@ -16,45 +16,53 @@
             touch-action: none; 
         }
 
-        /* شريط عداد الزيارات العلوي */
-        #visit-counter {
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px);
-            border: 1px solid #3b82f6; color: white; padding: 5px 20px;
-            border-radius: 50px; font-size: 11px; z-index: 200;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-            white-space: nowrap; font-weight: bold;
-        }
-
-        /* الدائرة المركزية مصغرة */
+        /* الدائرة المركزية مصغرة لتناسب الموبايل */
         #center-node {
             position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-            width: 70px; height: 70px; background: rgba(15, 23, 42, 0.95);
+            width: 75px; height: 75px; background: rgba(15, 23, 42, 0.95);
             border: 2px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            z-index: 50; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); text-align: center;
+            z-index: 50; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); text-align: center;
         }
 
-        /* صندوق عرض الكود - حل مشكلة السطر الواحد */
+        /* صندوق عرض الكود - تحت بعضه ومنظم */
         #code-box {
-            background: #010409; color: #7ee787; padding: 12px; border-radius: 8px;
-            font-family: 'monospace'; font-size: 10px; line-height: 1.4;
-            height: 60vh; overflow-y: auto; overflow-x: hidden; text-align: left;
-            direction: ltr; width: 92vw; border: 1px solid #30363d;
-            white-space: pre-wrap; word-wrap: break-word; word-break: break-all;
+            background: #010409;
+            color: #7ee787;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'monospace';
+            font-size: 10px;
+            line-height: 1.4;
+            height: 60vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            text-align: left;
+            direction: ltr;
+            width: 92vw;
+            border: 1px solid #30363d;
+            white-space: pre-wrap; /* لجعل الكود يظهر تحت بعضه */
+            word-wrap: break-word;
+            word-break: break-all;
         }
 
-        .connector { position: absolute; height: 1.2px; transform-origin: left center; z-index: 10; opacity: 0.5; }
+        .connector { 
+            position: absolute; 
+            height: 1.2px; 
+            transform-origin: left center; 
+            z-index: 10; 
+            opacity: 0.5; 
+        }
         
         .user-node { 
             position: absolute; z-index: 30; background: #1e293b; 
-            border: 2px solid var(--u-color); padding: 4px 8px; border-radius: 8px; 
+            border: 2px solid var(--u-color); padding: 4px 10px; border-radius: 10px; 
             font-weight: 900; font-size: 10px; color: white; 
-            transform: translate(-50%, -50%); box-shadow: 0 0 8px var(--u-color); 
+            transform: translate(-50%, -50%); box-shadow: 0 0 10px var(--u-color); 
         }
 
         .project-node { 
             position: absolute; z-index: 20; background: #0f172a; 
-            border: 1px solid var(--u-color); padding: 3px 6px; border-radius: 4px; 
+            border: 1px solid var(--u-color); padding: 4px 8px; border-radius: 5px; 
             font-size: 9px; color: #cbd5e1; transform: translate(-50%, -50%); 
         }
 
@@ -67,24 +75,20 @@
 </head>
 <body>
 
-    <!-- عداد الزيارات الإجمالي -->
-    <div id="visit-counter">
-        إجمالي زيارات المنصات: <span id="total-visits" class="text-blue-400">0</span>
-    </div>
-
+    <!-- الدائرة المركزية -->
     <div id="center-node">
         <div class="px-1">
-            <div class="text-[6px] text-blue-400 font-bold tracking-widest uppercase">Tomas</div>
-            <div class="text-[7px] font-black text-white leading-tight uppercase">Network</div>
+            <div class="text-[7px] text-blue-400 font-bold tracking-widest uppercase">Tomas</div>
+            <div class="text-[8px] font-black text-white leading-tight uppercase">Network</div>
         </div>
     </div>
 
     <div id="canvas" class="relative w-screen h-screen"></div>
 
+    <!-- نافذة التحكم بالموقع -->
     <div id="modal" onclick="this.style.display='none'">
-        <div class="bg-slate-900 border border-blue-500 p-5 rounded-2xl w-[75%] max-w-xs text-center" onclick="event.stopPropagation()">
-            <h3 id="m-title" class="text-md font-bold mb-1 text-white"></h3>
-            <div id="p-visits" class="text-[9px] text-slate-400 mb-4">زيارات هذه المنصة: 0</div>
+        <div class="bg-slate-900 border border-blue-500 p-6 rounded-2xl w-[80%] max-w-xs text-center" onclick="event.stopPropagation()">
+            <h3 id="m-title" class="text-md font-bold mb-6 text-white border-b border-slate-700 pb-2"></h3>
             <div class="flex flex-col gap-3">
                 <button id="btn-open" class="bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95">OPEN URL</button>
                 <button id="btn-show-code" class="bg-slate-700 text-white py-3 rounded-xl font-bold active:scale-95">VIEW SOURCE</button>
@@ -92,27 +96,28 @@
         </div>
     </div>
 
+    <!-- شاشة عرض السورس كود -->
     <div id="code-viewer">
         <div class="text-blue-400 text-[10px] mb-2 font-bold uppercase tracking-widest">Source Code Archive</div>
         <pre id="code-box"></pre>
-        <button onclick="document.getElementById('code-viewer').style.display='none'" class="mt-4 bg-red-600 text-white px-8 py-2 rounded-full font-bold text-sm active:scale-95">CLOSE</button>
+        <button onclick="document.getElementById('code-viewer').style.display='none'" class="mt-4 bg-red-600 text-white px-10 py-3 rounded-full font-bold text-sm active:scale-95">CLOSE</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
         const firebaseConfig = { databaseURL: "https://tomascloudnetwork-default-rtdb.firebaseio.com" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const canvas = document.getElementById('canvas');
 
+        // المسار كما هو بدون تغيير network/users
         onValue(ref(db, 'network/users'), (snapshot) => {
             canvas.innerHTML = '';
             const users = snapshot.val();
             if (!users) return;
 
-            let totalVisits = 0;
             const cx = window.innerWidth / 2;
             const cy = window.innerHeight / 2;
             const userKeys = Object.keys(users);
@@ -120,8 +125,10 @@
             userKeys.forEach((uKey, i) => {
                 const user = users[uKey];
                 const uAngle = (i / userKeys.length) * Math.PI * 2;
-                const ux = cx + 95 * Math.cos(uAngle);
-                const uy = cy + 95 * Math.sin(uAngle);
+                
+                // تصغير المسافات لتناسب شاشات الموبايل
+                const ux = cx + 90 * Math.cos(uAngle);
+                const uy = cy + 90 * Math.sin(uAngle);
 
                 drawLink(cx, cy, ux, uy, user.color || '#3b82f6');
 
@@ -136,12 +143,11 @@
                     const pKeys = Object.keys(user.projects);
                     pKeys.forEach((pKey, j) => {
                         const project = user.projects[pKey];
-                        const projectVisits = project.visits || 0;
-                        totalVisits += projectVisits;
-
-                        const pAngle = uAngle + (j - (pKeys.length - 1) / 2) * 0.7;
-                        const px = ux + 70 * Math.cos(pAngle);
-                        const py = uy + 70 * Math.sin(pAngle);
+                        const pAngle = uAngle + (j - (pKeys.length - 1) / 2) * 0.75;
+                        
+                        // تصغير مسافة المشاريع عن المستخدم
+                        const px = ux + 65 * Math.cos(pAngle);
+                        const py = uy + 65 * Math.sin(pAngle);
 
                         drawLink(ux, uy, px, py, user.color || '#3b82f6');
 
@@ -153,22 +159,12 @@
                         
                         pEl.onclick = () => {
                             document.getElementById('m-title').innerText = project.name;
-                            document.getElementById('p-visits').innerText = `زيارات هذه المنصة: ${projectVisits}`;
                             document.getElementById('modal').style.display = 'flex';
-                            
-                            // عند الضغط على الرابط: زيادة العداد وفتح الموقع
-                            document.getElementById('btn-open').onclick = () => {
-                                // تحديث العداد في Firebase
-                                const projectPath = `network/users/${uKey}/projects/${pKey}`;
-                                update(ref(db, projectPath), {
-                                    visits: increment(1)
-                                });
-                                window.open(project.url, '_blank');
-                            };
-
+                            document.getElementById('btn-open').onclick = () => window.open(project.url, '_blank');
                             document.getElementById('btn-show-code').onclick = () => {
                                 document.getElementById('modal').style.display = 'none';
                                 document.getElementById('code-viewer').style.display = 'flex';
+                                // عرض الكود بتنسيق الأسطر المتتالية
                                 document.getElementById('code-box').textContent = project.html_code;
                             };
                         };
@@ -176,8 +172,6 @@
                     });
                 }
             });
-            // تحديث الرقم الإجمالي في أعلى الشاشة
-            document.getElementById('total-visits').innerText = totalVisits;
         });
 
         function drawLink(x1, y1, x2, y2, color) {
