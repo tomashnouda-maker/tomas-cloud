@@ -5,11 +5,10 @@
     <title>Tomas Cloud Network | Pro Edition</title>
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        /* خلفية احترافية متدرجة بدلاً من الأسود */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
-            background: radial-gradient(circle, #1a2a6c, #b21f1f, #fdbb2d); /* تدرج لوني احترافي */
+            background: radial-gradient(circle, #1a2a6c, #b21f1f, #fdbb2d); 
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
             color: white; 
@@ -22,9 +21,8 @@
             100% { background-position: 0% 50%; }
         }
 
-        #mynetwork { width: 100vw; height: 100vh; }
+        #mynetwork { width: 100vw; height: 100vh; outline: none; }
         
-        /* النافذة المنبثقة بتصميم زجاجي */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); 
@@ -49,11 +47,15 @@
         .btn-visit { background: linear-gradient(to right, #00c6ff, #0072ff); }
         .btn-code { background: linear-gradient(to right, #11998e, #38ef7d); }
 
+        /* تعديل عرض الكود ليكون تحت بعضه البعض */
         pre {
             background-color: #0d0d0d; color: #00ff00; 
             padding: 20px; border-radius: 15px; border: 1px solid #333;
-            direction: ltr; text-align: left; white-space: pre-wrap; 
+            direction: ltr; text-align: left; 
+            white-space: pre-wrap; /* يضمن بقاء الكود تحت بعضه وتغليف الأسطر الطويلة */
+            word-break: break-all;
             font-family: 'Consolas', monospace; box-shadow: inset 0 0 10px #000;
+            overflow: auto;
         }
     </style>
 </head>
@@ -77,6 +79,12 @@
 
 <script>
     const firebaseURL = "https://tomascloudnetwork-default-rtdb.firebaseio.com/.json";
+    let network = null;
+    let nodesDataSet = new vis.DataSet();
+    let edgesDataSet = new vis.DataSet();
+    let isRotating = true; 
+    let rotationInterval = null;
+    let originalPositions = {};
 
     async function updateNetwork() {
         try {
@@ -87,93 +95,126 @@
             const nodes = [];
             const edges = [];
 
-            // العقدة المركزية الكبرى (تصميم زجاجي أبيض)
             nodes.push({ 
                 id: 'main', label: 'TOMAS\nNETWORK', shape: 'circle',
+                x: 0, y: 0, fixed: true,
                 color: { background: 'rgba(255,255,255,0.9)', border: '#fff' },
                 font: { size: 22, color: '#000', bold: true },
                 shadow: { enabled: true, color: 'rgba(255,255,255,0.5)', size: 20 }
             });
 
-            Object.keys(users).forEach(userKey => {
+            let i = 0;
+            const userKeys = Object.keys(users);
+            userKeys.forEach(userKey => {
                 const user = users[userKey];
                 const userColor = user.color || '#ffffff';
+                const angle = (i / userKeys.length) * Math.PI * 2;
+                
+                const ux = Math.cos(angle) * 250;
+                const uy = Math.sin(angle) * 250;
+                originalPositions[userKey] = { x: ux, y: uy };
 
-                // عقدة المستخدم
                 nodes.push({
-                    id: userKey,
-                    label: user.name || userKey,
-                    shape: 'circle',
-                    size: 30,
+                    id: userKey, label: user.name || userKey, shape: 'circle', size: 30,
+                    x: ux, y: uy,
                     color: { background: '#fff', border: userColor },
                     font: { color: '#000', size: 16, bold: true },
-                    borderWidth: 4,
-                    shadow: { enabled: true, color: userColor, size: 15 }
+                    borderWidth: 4, fixed: true
                 });
 
                 edges.push({ from: 'main', to: userKey, color: { color: '#fff' }, width: 3 });
 
                 if (user.projects) {
-                    Object.keys(user.projects).forEach(pKey => {
+                    const pKeys = Object.keys(user.projects);
+                    pKeys.forEach((pKey, pIdx) => {
                         const project = user.projects[pKey];
                         const projectId = `${userKey}_${pKey}`;
+                        const pAngle = angle + (pIdx + 1) * 0.3;
                         
-                        // الحل لعرض اسم الموقع بدقة:
-                        // إذا وجد name داخل المشروع سيعرضه، وإذا لم يجد سيعرض p1 أو p2
-                        const siteTitle = project.name ? project.name : pKey;
+                        const px = Math.cos(pAngle) * 400;
+                        const py = Math.sin(pAngle) * 400;
+                        originalPositions[projectId] = { x: px, y: py };
 
                         nodes.push({
-                            id: projectId,
-                            label: siteTitle,
-                            shape: 'box',
-                            margin: 10,
+                            id: projectId, label: project.name || pKey, shape: 'box', margin: 10,
+                            x: px, y: py,
                             color: { background: 'rgba(0,0,0,0.5)', border: userColor },
                             font: { color: '#fff', size: 14 },
-                            borderRadius: 10,
-                            data: project 
+                            borderRadius: 10, fixed: true, data: project 
                         });
 
                         edges.push({ from: userKey, to: projectId, color: { color: userColor }, width: 2, dashes: true });
                     });
                 }
+                i++;
             });
 
-            const container = document.getElementById('mynetwork');
-            const networkData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-            const options = {
-                physics: { enabled: true, solver: 'repulsion', repulsion: { nodeDistance: 150 } },
-                interaction: { hover: true }
-            };
+            nodesDataSet.clear();
+            nodesDataSet.add(nodes);
+            edgesDataSet.clear();
+            edgesDataSet.add(edges);
 
-            const network = new vis.Network(container, networkData, options);
+            if (!network) {
+                const container = document.getElementById('mynetwork');
+                network = new vis.Network(container, { nodes: nodesDataSet, edges: edgesDataSet }, {
+                    physics: { enabled: false },
+                    interaction: { hover: true }
+                });
 
-            network.on("click", function (params) {
-                if (params.nodes.length > 0) {
-                    const nodeId = params.nodes[0];
-                    const clickedNode = nodes.find(n => n.id === nodeId);
-                    if (clickedNode && clickedNode.data) showModal(clickedNode.label, clickedNode.data);
-                }
-            });
+                startRotation();
+
+                network.on("click", function (params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        if (nodeId === 'main') {
+                            isRotating = !isRotating;
+                            if (isRotating) startRotation();
+                            else stopRotationAndReset();
+                        } else if (!isRotating) {
+                            const clickedNode = nodesDataSet.get(nodeId);
+                            if (clickedNode && clickedNode.data) showModal(clickedNode.label, clickedNode.data);
+                        }
+                    }
+                });
+            }
 
         } catch (error) { console.error(error); }
+    }
+
+    function startRotation() {
+        if(rotationInterval) clearInterval(rotationInterval);
+        const speed = 0.008;
+        rotationInterval = setInterval(() => {
+            const allNodes = nodesDataSet.get();
+            allNodes.forEach(node => {
+                if (node.id !== 'main') {
+                    const x = node.x; const y = node.y;
+                    const cos = Math.cos(speed); const sin = Math.sin(speed);
+                    nodesDataSet.update({ id: node.id, x: x * cos - y * sin, y: x * sin + y * cos });
+                }
+            });
+        }, 16);
+    }
+
+    function stopRotationAndReset() {
+        clearInterval(rotationInterval);
+        Object.keys(originalPositions).forEach(id => {
+            nodesDataSet.update({
+                id: id,
+                x: originalPositions[id].x,
+                y: originalPositions[id].y
+            });
+        });
+        network.moveTo({ position: {x:0, y:0}, scale: 1, animation: true });
     }
 
     function showModal(name, project) {
         document.getElementById('projectName').innerText = name;
         document.getElementById('visitLink').href = project.url || "#";
-        document.getElementById('htmlCodeDisplay').textContent = formatHTML(project.html_code || "");
+        // عرض الكود المصدري الأصلي كما هو مخزن تماماً
+        document.getElementById('htmlCodeDisplay').textContent = project.html_code || "";
         document.getElementById('codeSection').style.display = 'none';
         document.getElementById('optionsModal').style.display = 'block';
-    }
-
-    function formatHTML(html) {
-        let tab = '    '; let result = ''; let indent= '';
-        html.split(/>\s*</).forEach(function(element) {
-            if (element.match( /^\/\w/ )) indent = indent.substring(tab.length);
-            result += indent + '<' + element + '>\r\n';
-            if (element.match( /^<?\w[^>]*[^\/]$/ )) indent += tab;
-        });
-        return result.substring(1, result.length-3);
     }
 
     function closeModal() { document.getElementById('optionsModal').style.display = 'none'; }
@@ -182,8 +223,6 @@
         sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
     }
 
-    // تحديث تلقائي كل 10 ثوانٍ لجلب أي إضافة جديدة من فيربيس
-    setInterval(updateNetwork, 10000); 
     updateNetwork();
 </script>
 
